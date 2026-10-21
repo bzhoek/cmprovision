@@ -17,7 +17,8 @@ case "$1" in
         deb-systemd-helper purge "$unit" >/dev/null || true
         deb-systemd-helper unmask "$unit" >/dev/null || true
     done
-    rm -rf /var/lib/cmprovision/database /var/lib/cmprovision/storage /var/lib/cmprovision/public/uploads /var/lib/cmprovision/.env
+    # Includes runtime state the package never shipped, like dnsmasq's lease file.
+    rm -rf /var/lib/cmprovision
   ;;
 esac
 

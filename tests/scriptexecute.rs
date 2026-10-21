@@ -408,6 +408,18 @@ async fn rejects_unsafe_serial_and_host() {
 }
 
 #[tokio::test]
+async fn explains_unprepared_eeprom_firmware() {
+    let s = Server::new().await;
+    s.project(json!({"eeprom_firmware": "stable/pieeprom-2023-01-11.bin"}), &[]).await;
+
+    let r = s.start(&[]).await;
+
+    assert_eq!(r.status, 200);
+    assert!(r.body.starts_with("echo 'EEPROM firmware of the active project is not prepared."), "{}", r.body);
+    assert_eq!(s.state().await["cmlogs"][0]["loglevel"], "error");
+}
+
+#[tokio::test]
 async fn truncates_oversized_logs() {
     let s = Server::new().await;
     s.project(json!({}), &[]).await;

@@ -9,6 +9,13 @@ case "$1" in
   configure)
 
     install -d -o www-data -g www-data -m 755 "$DATA/database" "$DATA/public" "$DATA/public/uploads" "$DATA/storage" "$DATA/storage/app" "$DATA/storage/app/firmware"
+
+    # Saved by preinst when upgrading from the PHP version.
+    if [ -d "$DATA/storage/app/firmware.preserved" ]; then
+        cp -anl "$DATA/storage/app/firmware.preserved/." "$DATA/storage/app/firmware/"
+        rm -rf "$DATA/storage/app/firmware.preserved"
+        chown -R www-data:www-data "$DATA/storage/app/firmware"
+    fi
     # Static IP assignments are written into it by the web interface.
     chown www-data:www-data "$DATA/etc/dnsmasq.conf"
 

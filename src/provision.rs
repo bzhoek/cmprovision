@@ -252,9 +252,12 @@ async fn start_provisioning(device: &Device, query: &Query, host: &str) -> Resul
     let server = server_for_device(host);
 
     if let Some(firmware) = &project.eeprom_firmware {
-        let sha256 = models::setting(&state.db, "active_eeprom_sha256")
-            .await?
-            .ok_or(Error::Status(StatusCode::NOT_FOUND))?;
+        // PHP answered a bare 404 here, which told neither the device nor the operator why.
+        let Some(sha256) = models::setting(&state.db, "active_eeprom_sha256").await? else {
+            let msg = "EEPROM firmware of the active project is not prepared. Make the project active again.";
+            device.log(board, "error", msg).await?;
+            return Ok(web::html(format!("echo '{msg}'")));
+        };
         preinstall.insert(0, flash_eeprom_step(firmware, &server, &sha256));
     }
     if let (true, Some(image)) = (project.verify, &image) {
