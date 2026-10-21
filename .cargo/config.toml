@@ -4,4 +4,4 @@ serve = "run -- serve"
 # Development defaults; production uses the built-in /var/lib/cmprovision and port 80.
 [env]
 CMPROVISION_DATA_DIR = { value = "target/dev", relative = true }
-CMPROVISION_LISTEN = "127.0.0.1:8080"
+CMPROVISION_LISTEN = "127.0.0.1:7080"

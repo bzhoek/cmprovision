@@ -2,7 +2,7 @@ use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use clap::Parser;
 use cmprovision::config::Config;
-use cmprovision::{AppState, db, web};
+use cmprovision::{AppState, Clock, db, web};
 use tower::ServiceExt;
 
 #[derive(Parser)]
@@ -18,7 +18,7 @@ async fn healthz_responds() {
     let pool = db::connect(&config.database()).await.unwrap();
     db::migrate(&pool).await.unwrap();
 
-    let response = web::router(AppState { config, db: pool })
+    let response = web::router(AppState { config, db: pool, clock: Clock::System })
         .oneshot(Request::get("/healthz").body(Body::empty()).unwrap())
         .await
         .unwrap();

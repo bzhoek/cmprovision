@@ -1,9 +1,11 @@
+use std::net::SocketAddr;
+
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use tracing_subscriber::EnvFilter;
 
 use cmprovision::config::{Config, ServeArgs};
-use cmprovision::{AppState, db, web};
+use cmprovision::{AppState, Clock, db, web};
 
 #[derive(Parser)]
 #[command(version, about = "Raspberry Pi Compute Module provisioning server")]
@@ -36,10 +38,10 @@ async fn main() -> Result<()> {
         Command::Migrate => db::migrate(&pool).await,
         Command::Serve(args) => {
             db::migrate(&pool).await?;
-            let state = AppState { config: cli.config, db: pool };
+            let state = AppState { config: cli.config, db: pool, clock: Clock::System };
             let listener = tokio::net::TcpListener::bind(args.listen).await?;
             tracing::info!("listening on {}", args.listen);
-            axum::serve(listener, web::router(state))
+            axum::serve(listener, web::router(state).into_make_service_with_connect_info::<SocketAddr>())
                 .with_graceful_shutdown(shutdown())
                 .await?;
             Ok(())
