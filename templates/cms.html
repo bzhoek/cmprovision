@@ -1,0 +1,43 @@
+{% extends "app.html" %}
+{% block title %}CMs{% endblock %}
+{% block content %}
+<div class="mb-4 flex flex-wrap items-end justify-between gap-4">
+  <h1 class="text-xl font-semibold">Compute Modules</h1>
+  <form method="get" action="/cms" class="flex items-end gap-2">
+    <label class="block text-sm">
+      <span class="font-medium text-gray-700">Project</span>
+      <select name="project" onchange="this.form.submit()" class="input mt-1">
+        <option value="0">All projects</option>
+        {% for p in projects %}
+        <option value="{{ p.id }}" {% if p.id == selected %}selected{% endif %}>{{ p.name }} ({{ p.count }})</option>
+        {% endfor %}
+      </select>
+    </label>
+    <noscript><button class="btn-secondary">Filter</button></noscript>
+    <a href="/cms/export.csv?project={{ selected }}" class="btn-secondary">Export CSV</a>
+  </form>
+</div>
+<div class="overflow-x-auto rounded-lg bg-white shadow">
+  <table class="min-w-full divide-y divide-gray-200 text-sm">
+    <thead class="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+      <tr><th class="px-4 py-2">Serial</th><th class="px-4 py-2">MAC</th><th class="px-4 py-2">Model</th><th class="px-4 py-2">Board</th><th class="px-4 py-2">Completed</th><th class="px-4 py-2"></th></tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for cm in cms %}
+      <tr>
+        <td class="px-4 py-2 font-mono"><a href="/cms/{{ cm.id }}" class="text-indigo-700 hover:underline">{{ cm.serial }}</a></td>
+        <td class="px-4 py-2 font-mono">{{ cm.mac }}</td>
+        <td class="px-4 py-2">{% if let Some(m) = cm.model %}{{ m }}{% endif %}</td>
+        <td class="px-4 py-2">{% if let Some(b) = cm.provisioning_board %}{{ b }}{% endif %}</td>
+        <td class="whitespace-nowrap px-4 py-2">{% if let Some(t) = cm.provisioning_complete_at %}{{ t }}{% else %}<span class="text-gray-400">not completed</span>{% endif %}</td>
+        <td class="px-4 py-2 text-right">
+          <form method="post" action="/cms/{{ cm.id }}/delete" onsubmit="return confirm('Delete CM {{ cm.serial }}?')"><button class="text-red-600 hover:underline">Delete</button></form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="px-4 py-6 text-center text-gray-500">No compute modules provisioned yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,102 +1,15 @@
-use axum::Router;
-use axum::body::{Body, to_bytes};
+mod common;
+
+use axum::body::Body;
 use axum::http::{Request, StatusCode, header};
-use clap::Parser;
-use cmprovision::config::Config;
-use cmprovision::{AppState, Clock, db, twofactor, web};
-use tower::ServiceExt;
+use cmprovision::twofactor;
+use common::{App, EMAIL, PASSWORD};
 
-const EMAIL: &str = "admin@example.com";
-const PASSWORD: &str = "correct horse";
-
-#[derive(Parser)]
-struct Args {
-    #[command(flatten)]
-    config: Config,
-}
-
-struct App {
-    _dir: tempfile::TempDir,
-    state: AppState,
-    router: Router,
-    user_id: i64,
-}
-
-struct Browser<'a> {
-    app: &'a App,
-    cookie: Option<String>,
-}
-
-struct Page {
-    status: StatusCode,
-    location: Option<String>,
-    body: String,
-}
-
-impl App {
-    async fn new() -> Self {
-        let dir = tempfile::tempdir().unwrap();
-        let database = dir.path().join("db.sqlite");
-        let config = Args::parse_from(["test", "--data-dir", dir.path().to_str().unwrap(), "--database", database.to_str().unwrap()]).config;
-        let pool = db::connect(&database).await.unwrap();
-        db::migrate(&pool).await.unwrap();
-        // Laravel's hash prefix, to prove existing passwords keep working.
-        let hash = bcrypt::hash_with_result(PASSWORD, 4).unwrap().format_for_version(bcrypt::Version::TwoY);
-        let user_id = sqlx::query("INSERT INTO users (name, email, password) VALUES ('Admin', ?, ?)")
-            .bind(EMAIL)
-            .bind(hash)
-            .execute(&pool)
-            .await
-            .unwrap()
-            .last_insert_rowid();
-        let state = AppState::new(config, pool, Clock::System);
-        App { _dir: dir, router: web::router(state.clone()), state, user_id }
-    }
-
-    fn browser(&self) -> Browser<'_> {
-        Browser { app: self, cookie: None }
-    }
-
-    async fn enable_two_factor(&self) -> (String, Vec<String>) {
-        let secret = twofactor::generate_secret();
-        let codes = twofactor::generate_recovery_codes();
-        twofactor::enable(&self.state.db, self.user_id, &secret, &codes).await.unwrap();
-        (secret, codes)
-    }
-}
-
-impl Browser<'_> {
-    async fn send(&mut self, request: axum::http::request::Builder, body: Body) -> Page {
-        let mut request = request.header(header::HOST, "cmprovision.local");
-        if let Some(cookie) = &self.cookie {
-            request = request.header(header::COOKIE, cookie);
-        }
-        let response = self.app.router.clone().oneshot(request.body(body).unwrap()).await.unwrap();
-        if let Some(set) = response.headers().get(header::SET_COOKIE) {
-            self.cookie = Some(set.to_str().unwrap().split(';').next().unwrap().to_string());
-        }
-        let status = response.status();
-        let location = response.headers().get(header::LOCATION).map(|v| v.to_str().unwrap().to_string());
-        let body = String::from_utf8(to_bytes(response.into_body(), usize::MAX).await.unwrap().to_vec()).unwrap();
-        Page { status, location, body }
-    }
-
-    async fn get(&mut self, path: &str) -> Page {
-        self.send(Request::get(path), Body::empty()).await
-    }
-
-    async fn post(&mut self, path: &str, form: &[(&str, &str)]) -> Page {
-        let body = form_urlencoded::Serializer::new(String::new()).extend_pairs(form).finish();
-        let request = Request::post(path)
-            .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded")
-            .header(header::ORIGIN, "http://cmprovision.local");
-        self.send(request, Body::from(body)).await
-    }
-
-    async fn login(&mut self) -> Page {
-        self.get("/login").await;
-        self.post("/login", &[("email", EMAIL), ("password", PASSWORD)]).await
-    }
+async fn enable_two_factor(app: &App) -> (String, Vec<String>) {
+    let secret = twofactor::generate_secret();
+    let codes = twofactor::generate_recovery_codes();
+    twofactor::enable(&app.state.db, app.user_id, &secret, &codes).await.unwrap();
+    (secret, codes)
 }
 
 fn current_code(secret: &str) -> String {
@@ -197,7 +110,7 @@ async fn login_cycles_the_session_id() {
 #[tokio::test]
 async fn two_factor_code_is_required_and_single_use() {
     let app = App::new().await;
-    let (secret, _) = app.enable_two_factor().await;
+    let (secret, _) = enable_two_factor(&app).await;
     let mut browser = app.browser();
 
     let page = browser.login().await;
@@ -217,7 +130,7 @@ async fn two_factor_code_is_required_and_single_use() {
 #[tokio::test]
 async fn recovery_codes_work_once() {
     let app = App::new().await;
-    let (_, codes) = app.enable_two_factor().await;
+    let (_, codes) = enable_two_factor(&app).await;
 
     let mut browser = app.browser();
     browser.login().await;

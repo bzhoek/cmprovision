@@ -89,7 +89,10 @@ pub fn extract_zipball(reader: impl Read + Seek, dest: &Path) -> Result<()> {
         } else if entry.is_symlink() {
             let mut link = String::new();
             entry.read_to_string(&mut link)?;
-            replace_with_symlink(&link, &target)?;
+            if let Some(parent) = target.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            replace_with_symlink(&link, &relative, &target)?;
         } else {
             if let Some(parent) = target.parent() {
                 fs::create_dir_all(parent)?;
@@ -106,10 +109,24 @@ fn is_plain(path: &Path) -> bool {
     path.components().all(|c| matches!(c, Component::Normal(_)))
 }
 
-fn replace_with_symlink(link: &str, target: &Path) -> Result<()> {
+/// Whether a relative symlink at `relative` (inside the tree) resolves to a path still inside it.
+fn stays_inside(relative: &Path, link: &str) -> bool {
+    let mut depth = relative.components().count() - 1;
+    for component in Path::new(link).components() {
+        match component {
+            Component::Normal(_) => depth += 1,
+            Component::CurDir => {}
+            Component::ParentDir if depth > 0 => depth -= 1,
+            _ => return false,
+        }
+    }
+    true
+}
+
+fn replace_with_symlink(link: &str, relative: &Path, target: &Path) -> Result<()> {
     let link = link.trim_end_matches('/');
-    if !is_plain(Path::new(link)) || link.contains('/') {
-        tracing::warn!("skipping symlink {} -> {link} pointing outside its channel", target.display());
+    if !stays_inside(relative, link) {
+        tracing::warn!("skipping symlink {} -> {link} pointing outside the firmware tree", target.display());
         return Ok(());
     }
     match fs::symlink_metadata(target) {
@@ -146,7 +163,10 @@ mod tests {
         zip.start_file(format!("{root}firmware-2711/default/pieeprom-2026-05-17.bin"), options).unwrap();
         zip.write_all(b"default").unwrap();
         zip.add_symlink(format!("{root}firmware-2711/stable"), "latest/", options).unwrap();
+        zip.add_symlink(format!("{root}firmware-2711/old/stable/pieeprom-2026-09-23.bin"), "../../latest/pieeprom-2026-09-23.bin", options).unwrap();
         zip.add_symlink(format!("{root}firmware-2711/escape"), "../../etc", options).unwrap();
+        zip.add_symlink(format!("{root}firmware-2711/old/escape"), "../../../etc", options).unwrap();
+        zip.add_symlink(format!("{root}firmware-2711/absolute"), "/etc", options).unwrap();
         zip.start_file(format!("{root}firmware-2712/latest/pieeprom-2026-10-15.bin"), options).unwrap();
         zip.write_all(b"pi5").unwrap();
         zip.start_file(format!("{root}README.md"), options).unwrap();
@@ -160,7 +180,10 @@ mod tests {
 
         assert_eq!(fs::read(dir.path().join("latest/pieeprom-2026-10-15.bin")).unwrap(), b"pieeprom-2026-10-15.bin");
         assert_eq!(fs::read_link(dir.path().join("stable")).unwrap(), Path::new("latest"));
-        assert!(!dir.path().join("escape").exists());
+        assert_eq!(fs::read(dir.path().join("old/stable/pieeprom-2026-09-23.bin")).unwrap(), b"pieeprom-2026-09-23.bin");
+        for escaping in ["escape", "old/escape", "absolute"] {
+            assert!(fs::symlink_metadata(dir.path().join(escaping)).is_err(), "{escaping} must not be created");
+        }
         assert!(!dir.path().join("README.md").exists());
     }
 

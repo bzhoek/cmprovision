@@ -1,0 +1,25 @@
+{% extends "app.html" %}
+{% block title %}Firmware{% endblock %}
+{% block content %}
+<div class="mb-4 flex flex-wrap items-center justify-between gap-4">
+  <h1 class="text-xl font-semibold">EEPROM firmware</h1>
+  <form method="post" action="/firmware/update" onsubmit="this.querySelector('button').disabled = true">
+    <button class="btn-primary">Download latest from GitHub</button>
+  </form>
+</div>
+<p class="mb-4 text-sm text-gray-600">Bootloader images for the Raspberry Pi 4 and Compute Module 4, from <span class="font-mono">raspberrypi/rpi-eeprom</span>. Downloading needs internet access and takes a while.</p>
+<div class="overflow-x-auto rounded-lg bg-white shadow">
+  <table class="min-w-full divide-y divide-gray-200 text-sm">
+    <thead class="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+      <tr><th class="px-4 py-2">Image</th><th class="px-4 py-2">Channel</th></tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for f in firmware %}
+      <tr><td class="px-4 py-2 font-mono">{{ f.name }}</td><td class="px-4 py-2">{{ f.channel }}</td></tr>
+      {% else %}
+      <tr><td colspan="2" class="px-4 py-6 text-center text-gray-500">No firmware downloaded yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -31,6 +31,9 @@ async fn main() -> Result<()> {
         .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")))
         .init();
 
+    // ring instead of aws-lc keeps the build free of C toolchains, easing cross-compilation.
+    let _ = rustls::crypto::ring::default_provider().install_default();
+
     let cli = Cli::parse();
     let pool = db::connect(&cli.config.database()).await?;
 

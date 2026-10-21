@@ -1,0 +1,59 @@
+{% extends "app.html" %}
+{% block title %}Images{% endblock %}
+{% block content %}
+<h1 class="mb-4 text-xl font-semibold">Images</h1>
+
+<section class="card mb-8">
+  <h2 class="card-title">Add image</h2>
+  <form id="upload" method="post" action="/addImage" enctype="multipart/form-data" class="space-y-4">
+    <input type="file" name="image" accept=".gz,.bz2,.xz" required class="block w-full text-sm">
+    <ul class="list-disc space-y-1 pl-5 text-sm text-gray-600">
+      <li>Upload disk images compressed as .gz, .bz2 or .xz. Do not use tar.</li>
+      <li>Disk space available: {{ free_space }} GB.</li>
+      <li>After the upload the server computes SHA256 checksums, which takes a while for large images.</li>
+    </ul>
+    <progress id="progress" max="100" value="0" class="hidden w-full"></progress>
+    <button id="upload-button" class="btn-primary">Upload</button>
+  </form>
+</section>
+
+<div class="overflow-x-auto rounded-lg bg-white shadow">
+  <table class="min-w-full divide-y divide-gray-200 text-sm">
+    <thead class="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+      <tr><th class="px-4 py-2">File</th><th class="px-4 py-2">Size (GB)</th><th class="px-4 py-2">SHA256 (compressed / uncompressed)</th><th class="px-4 py-2"></th></tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for i in images %}
+      <tr class="align-top">
+        <td class="break-all px-4 py-2">{{ i.filename }}</td>
+        <td class="whitespace-nowrap px-4 py-2">{{ i.compressed }} / {{ i.uncompressed }}</td>
+        <td class="px-4 py-2 font-mono text-xs">{{ i.sha256 }}<br>{{ i.uncompressed_sha256 }}</td>
+        <td class="px-4 py-2 text-right">
+          <form method="post" action="/images/{{ i.id }}/delete" onsubmit="return confirm('Delete {{ i.filename }}?')"><button class="text-red-600 hover:underline">Delete</button></form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="px-4 py-6 text-center text-gray-500">No images uploaded yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  // Multi-gigabyte uploads take minutes; show progress instead of a frozen page.
+  document.getElementById("upload").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = event.target;
+    const progress = document.getElementById("progress");
+    const button = document.getElementById("upload-button");
+    const xhr = new XMLHttpRequest();
+    button.disabled = true;
+    progress.classList.remove("hidden");
+    xhr.upload.addEventListener("progress", (e) => { if (e.lengthComputable) progress.value = (e.loaded / e.total) * 100; });
+    xhr.addEventListener("load", () => { window.location = xhr.responseURL || "/images"; });
+    xhr.addEventListener("error", () => { button.disabled = false; alert("Upload failed."); });
+    xhr.open("POST", form.action);
+    xhr.send(new FormData(form));
+  });
+</script>
+{% endblock %}

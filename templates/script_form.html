@@ -1,0 +1,41 @@
+{% extends "app.html" %}
+{% block title %}{% if id.is_some() %}Edit script{% else %}New script{% endif %}{% endblock %}
+{% block content %}
+<form method="post" action="{% if let Some(id) = id %}/scripts/{{ id }}{% else %}/scripts{% endif %}" class="card mx-auto max-w-3xl space-y-5">
+  <h1 class="card-title">{% if id.is_some() %}Edit script{% else %}New script{% endif %}</h1>
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">Name</span>
+    <input type="text" name="name" value="{{ fields.name }}" required maxlength="255" class="input">
+    {% if let Some(e) = errors.get("name") %}<span class="field-error">{{ e }}</span>{% endif %}
+  </label>
+  <div class="grid grid-cols-2 gap-4">
+    <label class="block">
+      <span class="text-sm font-medium text-gray-700">Type</span>
+      <select name="script_type" class="input">
+        <option value="preinstall" {% if fields.script_type == "preinstall" %}selected{% endif %}>preinstall</option>
+        <option value="postinstall" {% if fields.script_type == "postinstall" %}selected{% endif %}>postinstall</option>
+      </select>
+      {% if let Some(e) = errors.get("script_type") %}<span class="field-error">{{ e }}</span>{% endif %}
+    </label>
+    <label class="block">
+      <span class="text-sm font-medium text-gray-700">Priority (lower runs first)</span>
+      <input type="number" name="priority" value="{{ fields.priority }}" required class="input">
+      {% if let Some(e) = errors.get("priority") %}<span class="field-error">{{ e }}</span>{% endif %}
+    </label>
+  </div>
+  <label class="flex items-center gap-2 text-sm">
+    <input type="checkbox" name="bg" {% if fields.bg %}checked{% endif %} class="rounded border-gray-300 text-indigo-600">
+    Run in the background without waiting for it to finish
+  </label>
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">Script</span>
+    <textarea name="script" rows="16" required class="input font-mono text-sm">{{ fields.script }}</textarea>
+    {% if let Some(e) = errors.get("script") %}<span class="field-error">{{ e }}</span>{% endif %}
+    <span class="mt-1 block text-xs text-gray-500">Available variables: $SERIAL, $SERVER, $STORAGE, $PART1, $PART2.</span>
+  </label>
+  <div class="flex gap-3">
+    <button class="btn-primary">Save</button>
+    <a href="/scripts" class="btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

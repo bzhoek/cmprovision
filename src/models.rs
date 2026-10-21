@@ -28,6 +28,7 @@ pub struct Image {
     pub sha256: String,
     pub uncompressed_sha256: Option<String>,
     pub uncompressed_size: Option<i64>,
+    pub created_at: Option<String>,
 }
 
 #[derive(Clone, Debug, FromRow)]
@@ -76,16 +77,108 @@ pub struct Cm {
     pub provisioning_board: Option<String>,
 }
 
+/// Every column, for the detail page and CSV export.
+#[derive(Clone, Debug, FromRow)]
+pub struct CmDetail {
+    pub id: i64,
+    pub serial: String,
+    pub mac: String,
+    pub model: Option<String>,
+    pub memory_in_gb: Option<i64>,
+    pub storage: Option<i64>,
+    pub cid: Option<String>,
+    pub csd: Option<String>,
+    pub firmware: Option<String>,
+    pub image_filename: Option<String>,
+    pub image_sha256: Option<String>,
+    pub pre_script_output: Option<String>,
+    pub post_script_output: Option<String>,
+    pub script_return_code: Option<i64>,
+    pub temp1: Option<String>,
+    pub temp2: Option<String>,
+    pub project_id: Option<i64>,
+    pub provisioning_board: Option<String>,
+    pub provisioning_started_at: Option<String>,
+    pub provisioning_complete_at: Option<String>,
+    pub created_at: Option<String>,
+    pub updated_at: Option<String>,
+}
+
+#[derive(Clone, Debug, FromRow)]
+pub struct Host {
+    pub id: i64,
+    pub ip: String,
+    pub mac: String,
+    pub hostname: Option<String>,
+}
+
 pub async fn setting(db: impl SqliteExecutor<'_>, key: &str) -> sqlx::Result<Option<String>> {
     sqlx::query_scalar(r#"SELECT "value" FROM settings WHERE "key" = ?"#).bind(key).fetch_optional(db).await
 }
 
-/// The active project id, parsed leniently like PHP's intval() so "0" or junk means none.
+pub async fn set_setting(db: impl SqliteExecutor<'_>, key: &str, value: &str) -> sqlx::Result<()> {
+    sqlx::query(r#"INSERT INTO settings ("key", "value") VALUES (?, ?) ON CONFLICT ("key") DO UPDATE SET "value" = excluded."value""#)
+        .bind(key)
+        .bind(value)
+        .execute(db)
+        .await?;
+    Ok(())
+}
+
+pub async fn delete_setting(db: impl SqliteExecutor<'_>, key: &str) -> sqlx::Result<()> {
+    sqlx::query(r#"DELETE FROM settings WHERE "key" = ?"#).bind(key).execute(db).await?;
+    Ok(())
+}
+
+/// Parsed leniently like PHP's intval(), so "0" or junk means none.
+pub async fn active_project_id(db: &SqlitePool) -> sqlx::Result<Option<i64>> {
+    Ok(setting(db, "active_project").await?.and_then(|v| v.trim().parse::<i64>().ok()).filter(|&id| id != 0))
+}
+
 pub async fn active_project(db: &SqlitePool) -> sqlx::Result<Option<Project>> {
-    let Some(id) = setting(db, "active_project").await?.and_then(|v| v.trim().parse::<i64>().ok()) else {
-        return Ok(None);
-    };
-    project(db, id).await
+    match active_project_id(db).await? {
+        Some(id) => project(db, id).await,
+        None => Ok(None),
+    }
+}
+
+pub async fn projects(db: &SqlitePool) -> sqlx::Result<Vec<Project>> {
+    sqlx::query_as("SELECT * FROM projects ORDER BY name").fetch_all(db).await
+}
+
+pub async fn images(db: &SqlitePool) -> sqlx::Result<Vec<Image>> {
+    sqlx::query_as("SELECT * FROM images ORDER BY filename, id").fetch_all(db).await
+}
+
+pub async fn scripts(db: &SqlitePool) -> sqlx::Result<Vec<Script>> {
+    sqlx::query_as("SELECT * FROM scripts ORDER BY name").fetch_all(db).await
+}
+
+pub async fn script(db: &SqlitePool, id: i64) -> sqlx::Result<Option<Script>> {
+    sqlx::query_as("SELECT * FROM scripts WHERE id = ?").bind(id).fetch_optional(db).await
+}
+
+pub async fn labels(db: &SqlitePool) -> sqlx::Result<Vec<Label>> {
+    sqlx::query_as("SELECT * FROM labels ORDER BY name").fetch_all(db).await
+}
+
+pub async fn hosts(db: &SqlitePool) -> sqlx::Result<Vec<Host>> {
+    sqlx::query_as("SELECT * FROM hosts ORDER BY ip").fetch_all(db).await
+}
+
+pub async fn cms(db: &SqlitePool, project_id: Option<i64>) -> sqlx::Result<Vec<CmDetail>> {
+    match project_id {
+        Some(id) => sqlx::query_as("SELECT * FROM cms WHERE project_id = ? ORDER BY id").bind(id).fetch_all(db).await,
+        None => sqlx::query_as("SELECT * FROM cms ORDER BY id").fetch_all(db).await,
+    }
+}
+
+pub async fn cm(db: &SqlitePool, id: i64) -> sqlx::Result<Option<CmDetail>> {
+    sqlx::query_as("SELECT * FROM cms WHERE id = ?").bind(id).fetch_optional(db).await
+}
+
+pub async fn project_script_ids(db: &SqlitePool, project_id: i64) -> sqlx::Result<Vec<i64>> {
+    sqlx::query_scalar("SELECT script_id FROM project_script WHERE project_id = ?").bind(project_id).fetch_all(db).await
 }
 
 pub async fn project(db: impl SqliteExecutor<'_>, id: i64) -> sqlx::Result<Option<Project>> {

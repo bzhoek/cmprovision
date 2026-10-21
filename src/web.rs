@@ -7,7 +7,8 @@ use axum::routing::{any, get, post};
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
-use crate::{AppState, auth, dashboard, profile, provision, session};
+use crate::pages::{cms, dashboard, firmware, images, labels, profile, projects, scripts, settings};
+use crate::{AppState, auth, provision, session};
 
 /// Provisioning logs are truncated to 1 MiB after upload; leave room for multipart overhead.
 const SCRIPTEXECUTE_BODY_LIMIT: usize = 16 * 1024 * 1024;
@@ -30,6 +31,39 @@ pub fn router(state: AppState) -> Router {
         .route("/user/api-tokens", get(profile::api_tokens).post(profile::create_api_token))
         .route("/user/api-tokens/{id}", post(profile::update_api_token))
         .route("/user/api-tokens/{id}/delete", post(profile::delete_api_token))
+        .route("/cms", get(cms::index))
+        .route("/cms/export.csv", get(cms::export))
+        .route("/cms/{id}", get(cms::show))
+        .route("/cms/{id}/delete", post(cms::delete))
+        .route("/images", get(images::index))
+        // Images are uploaded as multi-gigabyte request bodies, streamed straight to disk.
+        .route("/addImage", post(images::upload).layer(DefaultBodyLimit::disable()))
+        .route("/images/{id}/delete", post(images::delete))
+        .route("/projects", get(projects::index).post(projects::create))
+        .route("/projects/new", get(projects::new))
+        .route("/projects/{id}", post(projects::update))
+        .route("/projects/{id}/edit", get(projects::edit))
+        .route("/projects/{id}/activate", post(projects::set_active))
+        .route("/projects/{id}/delete", post(projects::delete))
+        .route("/scripts", get(scripts::index).post(scripts::create))
+        .route("/scripts/new", get(scripts::new))
+        .route("/scripts/{id}", post(scripts::update))
+        .route("/scripts/{id}/edit", get(scripts::edit))
+        .route("/scripts/{id}/delete", post(scripts::delete))
+        .route("/labels", get(labels::index).post(labels::create))
+        .route("/labels/new", get(labels::new))
+        .route("/labels/test", post(labels::test_print))
+        .route("/labels/{id}", post(labels::update))
+        .route("/labels/{id}/edit", get(labels::edit))
+        .route("/labels/{id}/delete", post(labels::delete))
+        .route("/firmware", get(firmware::index))
+        .route("/firmware/update", post(firmware::update))
+        .route("/firmware/bootconf", get(projects::bootconf))
+        .route("/settings", get(settings::index))
+        .route("/settings/log/{service}", get(settings::log))
+        .route("/settings/static-ips", post(settings::create_static_ip))
+        .route("/settings/static-ips/new", get(settings::new_static_ip))
+        .route("/settings/static-ips/{id}/delete", post(settings::delete_static_ip))
         .layer(session::layer(state.db.clone()))
         .layer(middleware::from_fn(auth::same_origin));
 

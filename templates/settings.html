@@ -1,0 +1,43 @@
+{% extends "app.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h1 class="mb-4 text-xl font-semibold">Settings</h1>
+<div class="grid gap-8 lg:grid-cols-2">
+  <section class="card">
+    <h2 class="card-title">Services</h2>
+    <ul class="space-y-2 text-sm">
+      {% for s in services %}
+      <li class="flex items-center justify-between gap-4">
+        <span><span class="mr-2 inline-block h-2.5 w-2.5 rounded-full {% if s.running %}bg-green-500{% else %}bg-red-500{% endif %}"></span>{{ s.label }} {% if !s.running %}<span class="text-red-600">not running</span>{% endif %}</span>
+        <a href="/settings/log/{{ s.name }}" class="text-indigo-700 hover:underline">View log</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="card">
+    <div class="mb-4 flex items-center justify-between">
+      <h2 class="text-lg font-semibold">Static IP assignments</h2>
+      <a href="/settings/static-ips/new" class="btn-secondary">Add</a>
+    </div>
+    <table class="min-w-full text-sm">
+      <thead class="text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+        <tr><th class="py-1">IP</th><th class="py-1">MAC</th><th></th></tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for h in hosts %}
+        <tr>
+          <td class="py-2 font-mono">{{ h.ip }}</td>
+          <td class="py-2 font-mono">{{ h.mac }}</td>
+          <td class="py-2 text-right">
+            <form method="post" action="/settings/static-ips/{{ h.id }}/delete" onsubmit="return confirm('Delete static IP {{ h.ip }}?')"><button class="text-red-600 hover:underline">Delete</button></form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="py-4 text-center text-gray-500">Addresses are assigned dynamically.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+{% endblock %}
