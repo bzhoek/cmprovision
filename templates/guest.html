@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block body %}
+<main class="flex min-h-screen flex-col items-center justify-center px-4">
+  <div class="mb-6 text-center">
+    <div class="text-2xl font-semibold tracking-tight">CM Provisioning</div>
+    <div class="text-sm text-gray-500">Raspberry Pi Compute Module provisioning</div>
+  </div>
+  <div class="w-full max-w-md rounded-lg bg-white p-6 shadow">
+    {% block card %}{% endblock %}
+  </div>
+</main>
+{% endblock %}

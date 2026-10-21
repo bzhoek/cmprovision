@@ -102,5 +102,26 @@ async fn baseline_schema_matches_laravel() {
         .filter(|(name, _)| !laravel_only.iter().any(|t| name == t || name.starts_with(&format!("{t}_"))))
         .collect();
 
-    assert_eq!(normalize(schema(&fresh).await), expected);
+    let rust_only = |name: &str| name.starts_with("web_sessions");
+    let actual: Vec<_> = normalize(schema(&fresh).await).into_iter().filter(|(name, _)| !rust_only(name)).collect();
+    assert_eq!(actual, expected);
+}
+
+#[tokio::test]
+async fn adopting_laravel_database_resets_two_factor_and_drops_laravel_tables() {
+    let dir = tempfile::tempdir().unwrap();
+    let pool = db::connect(&copy_laravel_fixture(dir.path())).await.unwrap();
+    sqlx::query("INSERT INTO users (name, email, password, two_factor_secret, two_factor_recovery_codes) VALUES ('a', 'a@example.com', 'x', 'eyJpdiI6...', 'eyJpdiI6...')")
+        .execute(&pool)
+        .await
+        .unwrap();
+
+    db::migrate(&pool).await.unwrap();
+
+    let secret: Option<String> = sqlx::query_scalar("SELECT two_factor_secret FROM users").fetch_one(&pool).await.unwrap();
+    assert_eq!(secret, None);
+    let tables: Vec<String> = schema(&pool).await.into_iter().map(|(name, _)| name).collect();
+    for dropped in ["sessions", "jobs", "failed_jobs", "password_resets"] {
+        assert!(!tables.contains(&dropped.to_string()), "{dropped} still exists");
+    }
 }

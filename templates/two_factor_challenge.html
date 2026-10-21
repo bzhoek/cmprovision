@@ -1,0 +1,25 @@
+{% extends "guest.html" %}
+{% block title %}Two factor authentication{% endblock %}
+{% block card %}
+{% if let Some(error) = error %}
+<p class="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ error }}</p>
+{% endif %}
+<form method="post" action="/two-factor-challenge" class="space-y-4">
+  <p class="text-sm text-gray-600">Enter the code from your authenticator application.</p>
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">Code</span>
+    <input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" autofocus class="input">
+  </label>
+  <button class="btn-primary w-full">Log in</button>
+</form>
+<details class="mt-6 text-sm">
+  <summary class="cursor-pointer text-gray-600 hover:text-gray-900">Use a recovery code instead</summary>
+  <form method="post" action="/two-factor-challenge" class="mt-4 space-y-4">
+    <label class="block">
+      <span class="text-sm font-medium text-gray-700">Recovery code</span>
+      <input type="text" name="recovery_code" autocomplete="one-time-code" class="input">
+    </label>
+    <button class="btn-primary w-full">Log in</button>
+  </form>
+</details>
+{% endblock %}

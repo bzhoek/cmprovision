@@ -1,0 +1,24 @@
+{% extends "app.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1 class="mb-4 text-xl font-semibold">Provisioning log</h1>
+<div class="overflow-x-auto rounded-lg bg-white shadow">
+  <table class="min-w-full divide-y divide-gray-200 text-sm">
+    <thead class="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+      <tr><th class="px-4 py-2">Board</th><th class="px-4 py-2">CM</th><th class="px-4 py-2">Message</th></tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for row in log %}
+      <tr class="{% if row.error %}bg-red-50{% endif %} align-top">
+        <td class="whitespace-nowrap px-4 py-2">{{ row.board }}</td>
+        <td class="whitespace-nowrap px-4 py-2 font-mono">{{ row.cm }}</td>
+        <td class="px-4 py-2"><span class="text-gray-500">{{ row.time }}</span>
+          {% for line in row.lines %}{{ line }}{% if !loop.last %}<br>{% endif %}{% endfor %}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3" class="px-4 py-6 text-center text-gray-500">No provisioning activity yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

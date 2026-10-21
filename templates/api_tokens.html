@@ -1,0 +1,60 @@
+{% extends "app.html" %}
+{% block title %}API tokens{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl space-y-8">
+  {% if let Some(token) = new_token %}
+  <section class="rounded-lg border border-amber-200 bg-amber-50 p-6" role="status">
+    <h2 class="mb-2 font-semibold">New API token</h2>
+    <p class="mb-3 text-sm text-gray-700">Copy it now. It is not shown again.</p>
+    <input type="text" readonly value="{{ token }}" class="input font-mono" onclick="this.select()">
+  </section>
+  {% endif %}
+
+  <section class="card">
+    <h2 class="card-title">Create API token</h2>
+    <form method="post" action="/user/api-tokens" class="space-y-4">
+      <label class="block">
+        <span class="text-sm font-medium text-gray-700">Name</span>
+        <input type="text" name="name" value="{{ name }}" required maxlength="255" class="input">
+        {% if let Some(e) = errors.get("name") %}<span class="field-error">{{ e }}</span>{% endif %}
+      </label>
+      <fieldset>
+        <legend class="text-sm font-medium text-gray-700">Permissions</legend>
+        <div class="mt-2 flex flex-wrap gap-4">
+          {% for permission in permissions %}
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="{{ permission }}" {% if defaults.contains(permission) %}checked{% endif %} class="rounded border-gray-300 text-indigo-600"> {{ permission }}
+          </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <button class="btn-primary">Create</button>
+    </form>
+  </section>
+
+  {% if !tokens.is_empty() %}
+  <section class="card">
+    <h2 class="card-title">Manage API tokens</h2>
+    <ul class="divide-y divide-gray-100">
+      {% for token in tokens %}
+      <li class="py-4">
+        <div class="mb-2 flex items-baseline justify-between gap-4">
+          <span class="font-medium">{{ token.name }}</span>
+          <span class="text-xs text-gray-500">{% if let Some(used) = token.last_used_at %}Last used {{ used }}{% else %}Never used{% endif %}</span>
+        </div>
+        <form method="post" action="/user/api-tokens/{{ token.id }}" class="flex flex-wrap items-center gap-4">
+          {% for permission in permissions %}
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="{{ permission }}" {% if token.has(permission) %}checked{% endif %} class="rounded border-gray-300 text-indigo-600"> {{ permission }}
+          </label>
+          {% endfor %}
+          <button class="btn-secondary">Save</button>
+          <button formaction="/user/api-tokens/{{ token.id }}/delete" class="btn-danger" onclick="return confirm('Delete this API token?')">Delete</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

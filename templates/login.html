@@ -1,0 +1,21 @@
+{% extends "guest.html" %}
+{% block title %}Log in{% endblock %}
+{% block card %}
+<form method="post" action="/login" class="space-y-4">
+  {% if let Some(error) = error %}
+  <p class="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ error }}</p>
+  {% endif %}
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">Email</span>
+    <input type="email" name="email" value="{{ email }}" required autofocus autocomplete="username" class="input">
+  </label>
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">Password</span>
+    <input type="password" name="password" required autocomplete="current-password" class="input">
+  </label>
+  <label class="flex items-center gap-2 text-sm text-gray-600">
+    <input type="checkbox" name="remember" class="rounded border-gray-300 text-indigo-600"> Remember me
+  </label>
+  <button class="btn-primary w-full">Log in</button>
+</form>
+{% endblock %}

@@ -1,4 +1,6 @@
+pub mod auth;
 pub mod config;
+pub mod dashboard;
 pub mod db;
 pub mod dnsmasq;
 pub mod eeprom;
@@ -6,9 +8,14 @@ pub mod firmware;
 pub mod images;
 pub mod label;
 pub mod models;
+pub mod profile;
 pub mod provision;
 pub mod script;
+pub mod session;
 pub mod switch;
+pub mod templates;
+pub mod tokens;
+pub mod twofactor;
 pub mod web;
 
 use chrono::{NaiveDateTime, Utc};
@@ -21,13 +28,22 @@ pub struct AppState {
     pub db: SqlitePool,
     pub clock: Clock,
     pub hasher: images::Hasher,
+    pub login_limiter: auth::LoginLimiter,
+    pub used_steps: twofactor::UsedSteps,
 }
 
 impl AppState {
     /// Must run inside a Tokio runtime, which drives the image hashing worker.
     pub fn new(config: Config, db: SqlitePool, clock: Clock) -> Self {
         let hasher = images::Hasher::spawn(db.clone(), config.uploads_dir());
-        AppState { config, db, clock, hasher }
+        AppState {
+            config,
+            db,
+            clock,
+            hasher,
+            login_limiter: auth::LoginLimiter::default(),
+            used_steps: twofactor::UsedSteps::default(),
+        }
     }
 }
 
