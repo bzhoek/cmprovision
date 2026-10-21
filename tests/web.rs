@@ -18,7 +18,7 @@ async fn healthz_responds() {
     let pool = db::connect(&config.database()).await.unwrap();
     db::migrate(&pool).await.unwrap();
 
-    let response = web::router(AppState { config, db: pool, clock: Clock::System })
+    let response = web::router(AppState::new(config, pool, Clock::System))
         .oneshot(Request::get("/healthz").body(Body::empty()).unwrap())
         .await
         .unwrap();

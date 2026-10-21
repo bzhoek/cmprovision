@@ -3,6 +3,7 @@ pub mod db;
 pub mod dnsmasq;
 pub mod eeprom;
 pub mod firmware;
+pub mod images;
 pub mod label;
 pub mod models;
 pub mod provision;
@@ -19,6 +20,15 @@ pub struct AppState {
     pub config: Config,
     pub db: SqlitePool,
     pub clock: Clock,
+    pub hasher: images::Hasher,
+}
+
+impl AppState {
+    /// Must run inside a Tokio runtime, which drives the image hashing worker.
+    pub fn new(config: Config, db: SqlitePool, clock: Clock) -> Self {
+        let hasher = images::Hasher::spawn(db.clone(), config.uploads_dir());
+        AppState { config, db, clock, hasher }
+    }
 }
 
 #[derive(Clone, Copy, Debug)]

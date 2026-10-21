@@ -51,7 +51,7 @@ impl Server {
             .await
             .unwrap();
         let clock = Clock::Fixed(NaiveDate::from_ymd_opt(2024, 1, 2).unwrap().and_hms_opt(3, 4, 5).unwrap());
-        let router = web::router(AppState { config, db: db.clone(), clock });
+        let router = web::router(AppState::new(config, db.clone(), clock));
         Server { _dir: dir, db, router, host: "172.20.0.1" }
     }
 

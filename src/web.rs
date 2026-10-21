@@ -3,6 +3,7 @@ use axum::extract::DefaultBodyLimit;
 use axum::http::{StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{any, get};
+use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
 use crate::{AppState, provision};
@@ -14,6 +15,9 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/healthz", get(healthz))
         .route("/scriptexecute", any(provision::scriptexecute).layer(DefaultBodyLimit::max(SCRIPTEXECUTE_BODY_LIMIT)))
+        // Unauthenticated, like nginx served public/uploads: devices download images and
+        // pieeprom.bin from here, and the random 40-character names are the only protection.
+        .nest_service("/uploads", ServeDir::new(state.config.uploads_dir()))
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }

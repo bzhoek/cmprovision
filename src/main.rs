@@ -38,7 +38,8 @@ async fn main() -> Result<()> {
         Command::Migrate => db::migrate(&pool).await,
         Command::Serve(args) => {
             db::migrate(&pool).await?;
-            let state = AppState { config: cli.config, db: pool, clock: Clock::System };
+            let state = AppState::new(cli.config, pool, Clock::System);
+            state.hasher.enqueue_pending(&state.db).await?;
             let listener = tokio::net::TcpListener::bind(args.listen).await?;
             tracing::info!("listening on {}", args.listen);
             axum::serve(listener, web::router(state).into_make_service_with_connect_info::<SocketAddr>())
