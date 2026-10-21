@@ -15,7 +15,7 @@ use crate::{AppState, tokens, twofactor};
 const PENDING_SECRET: &str = "profile.pending_two_factor_secret";
 const SHOW_CODES: &str = "profile.show_recovery_codes";
 const NEW_TOKEN: &str = "profile.new_token";
-const MIN_PASSWORD: usize = 8;
+use auth::MIN_PASSWORD;
 
 struct ProfilePage {
     name: String,
@@ -72,10 +72,6 @@ pub struct ProfileForm {
     email: String,
 }
 
-fn looks_like_email(email: &str) -> bool {
-    email.split_once('@').is_some_and(|(local, domain)| !local.is_empty() && !domain.is_empty() && !email.contains(char::is_whitespace))
-}
-
 pub async fn update_profile(
     State(state): State<AppState>,
     CurrentUser(user): CurrentUser,
@@ -88,7 +84,7 @@ pub async fn update_profile(
     if page.name.is_empty() || page.name.len() > 255 {
         page.profile_errors.add("name", "The name field is required and may not be longer than 255 characters.");
     }
-    if !looks_like_email(&page.email) || page.email.len() > 255 {
+    if !auth::looks_like_email(&page.email) || page.email.len() > 255 {
         page.profile_errors.add("email", "The email must be a valid email address.");
     } else if auth::user_by_email(&state.db, &page.email).await?.is_some_and(|other| other.id != user.id) {
         page.profile_errors.add("email", "The email has already been taken.");

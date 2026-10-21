@@ -54,8 +54,13 @@ pub async fn user_by_email(db: &SqlitePool, email: &str) -> sqlx::Result<Option<
 
 /// Laravel's default bcrypt cost.
 const BCRYPT_COST: u32 = 10;
+pub const MIN_PASSWORD: usize = 8;
 
-pub async fn hash_password(password: &str) -> Result<String> {
+pub fn looks_like_email(email: &str) -> bool {
+    email.split_once('@').is_some_and(|(local, domain)| !local.is_empty() && !domain.is_empty() && !email.contains(char::is_whitespace))
+}
+
+pub async fn hash_password(password: &str) -> anyhow::Result<String> {
     let password = password.to_string();
     Ok(tokio::task::spawn_blocking(move || bcrypt::hash(password, BCRYPT_COST)).await??)
 }

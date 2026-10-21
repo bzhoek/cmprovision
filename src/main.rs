@@ -5,7 +5,7 @@ use clap::{Parser, Subcommand};
 use tracing_subscriber::EnvFilter;
 
 use cmprovision::config::{Config, ServeArgs};
-use cmprovision::{AppState, Clock, db, web};
+use cmprovision::{AppState, Clock, cli, db, web};
 
 #[derive(Parser)]
 #[command(version, about = "Raspberry Pi Compute Module provisioning server")]
@@ -23,6 +23,10 @@ enum Command {
     Serve(ServeArgs),
     /// Create or upgrade the database schema
     Migrate,
+    /// Create a web interface user
+    CreateUser,
+    /// Connect to a managed Ethernet switch by SNMP to identify ports
+    EthernetswitchConfigure,
 }
 
 #[tokio::main]
@@ -39,6 +43,18 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Command::Migrate => db::migrate(&pool).await,
+        Command::CreateUser => {
+            db::migrate(&pool).await?;
+            cli::create_user(&AppState::new(cli.config, pool, Clock::System), &mut cli::Terminal).await
+        }
+        Command::EthernetswitchConfigure => {
+            db::migrate(&pool).await?;
+            let state = AppState::new(cli.config, pool, Clock::System);
+            if !cli::configure_switch(&state, &mut cli::Terminal).await? {
+                std::process::exit(1);
+            }
+            Ok(())
+        }
         Command::Serve(args) => {
             db::migrate(&pool).await?;
             let state = AppState::new(cli.config, pool, Clock::System);
@@ -53,6 +69,11 @@ async fn main() -> Result<()> {
     }
 }
 
+/// systemd stops the service with SIGTERM; Ctrl-C covers running it by hand.
 async fn shutdown() {
-    let _ = tokio::signal::ctrl_c().await;
+    let mut terminate = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()).expect("installing SIGTERM handler");
+    tokio::select! {
+        _ = tokio::signal::ctrl_c() => {}
+        _ = terminate.recv() => {}
+    }
 }
