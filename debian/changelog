@@ -1,3 +1,17 @@
+cmprovision4 (2.0.0) unstable; urgency=medium
+
+  * Rewrite in Rust as a single service on port 80; PHP, php-fpm, nginx
+    and the queue worker are no longer needed. The database and uploads
+    of an existing installation are kept.
+  * Users must enable two factor authentication again.
+  * Password reset, browser session management and account deletion
+    are removed.
+  * Commands are now `cmprovision create-user` and
+    `cmprovision ethernetswitch-configure`.
+  * Removing the package keeps the database; purging deletes it.
+
+ -- Bas van der Hoek <bvdhoek@zilverline.com>  Wed, 21 Oct 2026 19:00:00 +0200
+
 cmprovision4 (1.6.4) unstable; urgency=medium
 
   * Add support for detecting which network port devices are connected

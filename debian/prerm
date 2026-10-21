@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = "remove" ]; then
+    for unit in cmprovision.service cmprovision-dnsmasq.service cmprovision-rpiboot.service; do
+        deb-systemd-invoke stop "$unit" || true
+    done
+fi
+
+exit 0

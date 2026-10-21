@@ -1,7 +1,43 @@
 [package]
 name = "cmprovision"
-version = "0.1.0"
+version = "2.0.0"
 edition = "2024"
+description = "Web application to mass provision Raspberry Pi Compute Modules"
+license = "BSD-3-Clause"
+repository = "https://github.com/bzhoek/cmprovision"
+
+# Stripped by rustc, because the host's strip cannot handle cross-compiled ELF binaries.
+[profile.release]
+strip = true
+lto = "thin"
+
+# Same package name as the PHP releases, so installations upgrade in place.
+[package.metadata.deb]
+name = "cmprovision4"
+revision = ""
+maintainer = "Bas van der Hoek <bvdhoek@zilverline.com>"
+copyright = "2021, Raspberry Pi"
+license-file = ["LICENSE", "0"]
+section = "admin"
+priority = "optional"
+depends = "libc6 (>= 2.31), rpiboot (>= 20220504~214218), dnsmasq-base, sudo, ca-certificates"
+conflicts = "usbbootgui"
+changelog = "debian/changelog"
+maintainer-scripts = "debian/"
+conf-files = ["/var/lib/cmprovision/etc/dnsmasq.conf"]
+extended-description = """\
+Serves the web interface, the provisioning endpoint and the boot files that \
+let a Raspberry Pi 4 program Compute Modules connected to it over USB or Ethernet."""
+assets = [
+    ["target/release/cmprovision", "usr/bin/", "755"],
+    ["scriptexecute/*", "var/lib/cmprovision/scriptexecute/", "644"],
+    ["scriptexecute/overlays/*", "var/lib/cmprovision/scriptexecute/overlays/", "644"],
+    ["etc/dnsmasq.conf", "var/lib/cmprovision/etc/", "644"],
+    ["debian/010_cmprovision", "etc/sudoers.d/", "440"],
+    ["debian/cmprovision.service", "lib/systemd/system/", "644"],
+    ["debian/cmprovision-dnsmasq.service", "lib/systemd/system/", "644"],
+    ["debian/cmprovision-rpiboot.service", "lib/systemd/system/", "644"],
+]
 
 [dependencies]
 anyhow = "1.0.104"

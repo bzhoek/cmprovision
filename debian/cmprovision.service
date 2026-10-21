@@ -1,0 +1,19 @@
+[Unit]
+Description=CM provisioning web interface and provisioning endpoint
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+# Reading service logs for the Settings page.
+SupplementaryGroups=systemd-journal
+ExecStart=/usr/bin/cmprovision serve
+Restart=always
+# Port 80 without running as root.
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
