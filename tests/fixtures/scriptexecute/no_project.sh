@@ -1,0 +1,1 @@
+echo 'No active project set in CMprovisioning'

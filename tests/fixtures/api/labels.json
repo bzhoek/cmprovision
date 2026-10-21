@@ -1,0 +1,17 @@
+{
+    "status": 200,
+    "body": [
+        {
+            "id": 1,
+            "name": "Ftp",
+            "printer_type": "ftp",
+            "print_command": null,
+            "ftp_hostname": "printer",
+            "ftp_username": "print",
+            "file_extension": "jscript",
+            "template": "$mac",
+            "created_at": "2024-01-02T03:04:05.000000Z",
+            "updated_at": "2024-01-02T03:04:05.000000Z"
+        }
+    ]
+}

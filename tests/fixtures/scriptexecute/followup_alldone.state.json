@@ -1,0 +1,55 @@
+{
+    "status": 200,
+    "content_type": "text/html; charset=UTF-8",
+    "cm": {
+        "serial": "10000000abcdef12",
+        "mac": "b8:27:eb:cd:ef:12",
+        "model": "CM4",
+        "memory_in_gb": 4,
+        "storage": 31268536320,
+        "cid": "15010038474e443352",
+        "csd": "d00f00320f5903ff",
+        "firmware": "VERSION:abcdef\nBUILD_TIMESTAMP=1700000000\nTue, 14 Nov 2023 22:13:20 +0000",
+        "image_filename": null,
+        "image_sha256": null,
+        "pre_script_output": "pre output\n",
+        "post_script_output": null,
+        "script_return_code": 1,
+        "temp1": "45.2",
+        "temp2": "50.1",
+        "project_id": 1,
+        "provisioning_board": null,
+        "provisioning_started_at": "2024-01-02 03:04:05",
+        "provisioning_complete_at": "2024-01-02 03:04:05"
+    },
+    "cmlogs": [
+        {
+            "msg": "Provisioning started. Starting preinstall scripts.",
+            "cm": "10000000abcdef12",
+            "board": null,
+            "ip": null,
+            "loglevel": "info"
+        },
+        {
+            "msg": "Preinstall script complete. Starting to write image.",
+            "cm": "10000000abcdef12",
+            "board": null,
+            "ip": null,
+            "loglevel": "info"
+        },
+        {
+            "msg": "Error during dd. Return code 1. Script output:\n\ndd: error writing\n",
+            "cm": "10000000abcdef12",
+            "board": null,
+            "ip": null,
+            "loglevel": "error"
+        },
+        {
+            "msg": "Provisioning completed. Verification successful.",
+            "cm": "10000000abcdef12",
+            "board": null,
+            "ip": null,
+            "loglevel": "info"
+        }
+    ]
+}

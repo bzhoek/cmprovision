@@ -1,0 +1,29 @@
+{
+    "status": 200,
+    "body": [
+        {
+            "id": 1,
+            "serial": "10000000abcdef12",
+            "mac": "b8:27:eb:cd:ef:12",
+            "model": "CM4",
+            "memory_in_gb": 4,
+            "storage": 31268536320,
+            "cid": "15010038474e443352",
+            "csd": "d00f00320f5903ff",
+            "firmware": null,
+            "image_filename": "raspios.img.gz",
+            "image_sha256": "bb00000000000000000000000000000000000000000000000000000000000000",
+            "pre_script_output": null,
+            "post_script_output": null,
+            "script_return_code": null,
+            "temp1": "45.2",
+            "temp2": null,
+            "project_id": 1,
+            "provisioning_board": null,
+            "provisioning_started_at": "2024-01-02T03:04:05.000000Z",
+            "provisioning_complete_at": null,
+            "created_at": "2024-01-02T03:04:05.000000Z",
+            "updated_at": "2024-01-02T03:04:05.000000Z"
+        }
+    ]
+}

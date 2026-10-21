@@ -1,0 +1,14 @@
+{
+    "status": 200,
+    "body": {
+        "id": 1,
+        "filename": "raspios.img.gz",
+        "filename_on_server": "abcdefghijklmnopqrstuvwxyz0123456789ABCD.gz",
+        "filename_extension": "gz",
+        "sha256": "bb00000000000000000000000000000000000000000000000000000000000000",
+        "created_at": "2024-01-02T03:04:05.000000Z",
+        "updated_at": "2024-01-02T03:04:05.000000Z",
+        "uncompressed_sha256": "aa00000000000000000000000000000000000000000000000000000000000000",
+        "uncompressed_size": 1073741824
+    }
+}
