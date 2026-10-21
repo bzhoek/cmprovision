@@ -206,6 +206,12 @@ async fn validate(state: &AppState, id: Option<i64>, input: ProjectInput) -> Res
         scripts: input.scripts,
         active: checked(&input.active),
     };
+    let errors = check(state, id, &fields).await?;
+    Ok((fields, errors))
+}
+
+/// Shared with the API, which patches individual fields of an existing project.
+pub async fn check(state: &AppState, id: Option<i64>, fields: &ProjectFields) -> Result<Errors> {
     let mut errors = Errors::default();
     if fields.name.is_empty() || fields.name.len() > 255 {
         errors.add("name", "The name field is required and may not be longer than 255 characters.");
@@ -235,10 +241,10 @@ async fn validate(state: &AppState, id: Option<i64>, input: ProjectInput) -> Res
     } else if fields.label_moment != "never" && models::label(&state.db, fields.label_id).await?.is_none() {
         errors.add("label_id", "Choose a label to print.");
     }
-    Ok((fields, errors))
+    Ok(errors)
 }
 
-async fn save(state: &AppState, id: Option<i64>, fields: &ProjectFields) -> Result<i64> {
+pub async fn save(state: &AppState, id: Option<i64>, fields: &ProjectFields) -> Result<i64> {
     let now = state.clock.timestamp();
     let nonempty = |s: &str| (!s.is_empty()).then(|| s.to_string());
     let mut tx = state.db.begin().await?;

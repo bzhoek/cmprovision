@@ -8,7 +8,7 @@ use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
 use crate::pages::{cms, dashboard, firmware, images, labels, profile, projects, scripts, settings};
-use crate::{AppState, auth, provision, session};
+use crate::{AppState, api, auth, provision, session};
 
 /// Provisioning logs are truncated to 1 MiB after upload; leave room for multipart overhead.
 const SCRIPTEXECUTE_BODY_LIMIT: usize = 16 * 1024 * 1024;
@@ -69,6 +69,8 @@ pub fn router(state: AppState) -> Router {
 
     Router::new()
         .merge(web)
+        // Token authenticated, without cookies, so neither sessions nor the origin check apply.
+        .nest("/api", api::router().layer(DefaultBodyLimit::disable()))
         .route("/healthz", get(healthz))
         .route("/assets/app.css", get(stylesheet))
         .route("/favicon.ico", get(favicon))
