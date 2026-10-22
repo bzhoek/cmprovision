@@ -1,0 +1,23 @@
+{% extends "app.html" %}
+{% block title %}Add static IP{% endblock %}
+{% block content %}
+<form method="post" action="/settings/static-ips" class="card mx-auto max-w-lg space-y-5">
+  <h1 class="card-title">Add static IP</h1>
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">IP address</span>
+    <input type="text" name="ip" value="{{ ip }}" required class="input font-mono">
+    {% if let Some(e) = errors.get("ip") %}<span class="field-error">{{ e }}</span>{% endif %}
+  </label>
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">MAC address</span>
+    <input type="text" name="mac" value="{{ mac }}" required list="detected-macs" placeholder="dc:a6:32:00:00:00" class="input font-mono">
+    {% if let Some(e) = errors.get("mac") %}<span class="field-error">{{ e }}</span>{% endif %}
+    <datalist id="detected-macs">{% for m in detected %}<option value="{{ m }}">{% endfor %}</datalist>
+    {% if !detected.is_empty() %}<span class="mt-1 block text-xs text-gray-500">Recently refused a lease: <span class="font-mono">{{ detected.join(", ") }}</span></span>{% endif %}
+  </label>
+  <div class="flex gap-3">
+    <button class="btn-primary">Save</button>
+    <a href="/settings" class="btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

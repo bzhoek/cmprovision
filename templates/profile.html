@@ -1,0 +1,90 @@
+{% extends "app.html" %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl space-y-8">
+  <section class="card">
+    <h2 class="card-title">Profile information</h2>
+    <form method="post" action="/user/profile-information" class="space-y-4">
+      <label class="block">
+        <span class="text-sm font-medium text-gray-700">Name</span>
+        <input type="text" name="name" value="{{ name }}" required maxlength="255" autocomplete="name" class="input">
+        {% if let Some(e) = profile_errors.get("name") %}<span class="field-error">{{ e }}</span>{% endif %}
+      </label>
+      <label class="block">
+        <span class="text-sm font-medium text-gray-700">Email</span>
+        <input type="email" name="email" value="{{ email }}" required maxlength="255" autocomplete="username" class="input">
+        {% if let Some(e) = profile_errors.get("email") %}<span class="field-error">{{ e }}</span>{% endif %}
+      </label>
+      <button class="btn-primary">Save</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2 class="card-title">Update password</h2>
+    <form method="post" action="/user/password" class="space-y-4">
+      <label class="block">
+        <span class="text-sm font-medium text-gray-700">Current password</span>
+        <input type="password" name="current_password" required autocomplete="current-password" class="input">
+        {% if let Some(e) = password_errors.get("current_password") %}<span class="field-error">{{ e }}</span>{% endif %}
+      </label>
+      <label class="block">
+        <span class="text-sm font-medium text-gray-700">New password</span>
+        <input type="password" name="password" required minlength="8" autocomplete="new-password" class="input">
+        {% if let Some(e) = password_errors.get("password") %}<span class="field-error">{{ e }}</span>{% endif %}
+      </label>
+      <label class="block">
+        <span class="text-sm font-medium text-gray-700">Confirm password</span>
+        <input type="password" name="password_confirmation" required autocomplete="new-password" class="input">
+      </label>
+      <button class="btn-primary">Save</button>
+    </form>
+  </section>
+
+  <section class="card" id="two-factor">
+    <h2 class="card-title">Two factor authentication</h2>
+    {% if let Some(error) = two_factor_error %}
+    <p class="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ error }}</p>
+    {% endif %}
+
+    {% if two_factor_enabled %}
+      <p class="mb-4 text-sm text-gray-600">Two factor authentication is <strong>enabled</strong>. Logging in asks for a code from your authenticator application.</p>
+      {% if !recovery_codes.is_empty() %}
+      <div class="mb-4">
+        <p class="mb-2 text-sm text-gray-600">Store these recovery codes in a password manager. Each can be used once if you lose your device.</p>
+        <pre class="rounded-md bg-gray-100 p-4 font-mono text-sm">{% for code in recovery_codes %}{{ code }}
+{% endfor %}</pre>
+      </div>
+      {% endif %}
+      <form method="post" class="flex flex-wrap items-end gap-3">
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">Password</span>
+          <input type="password" name="password" required autocomplete="current-password" class="input">
+        </label>
+        <button formaction="/user/two-factor/recovery-codes" class="btn-secondary">Regenerate recovery codes</button>
+        <button formaction="/user/two-factor/disable" class="btn-danger">Disable</button>
+      </form>
+    {% else if let Some(secret) = pending_secret %}
+      <p class="mb-4 text-sm text-gray-600">Scan this QR code with your authenticator application, then enter the code it shows to finish enabling two factor authentication.</p>
+      {% if let Some(qr) = pending_qr %}<img src="{{ qr }}" alt="QR code for the authenticator application" class="mb-2 h-48 w-48">{% endif %}
+      <p class="mb-4 text-xs text-gray-500">Setup key: <span class="font-mono">{{ secret }}</span></p>
+      <form method="post" action="/user/two-factor/confirm" class="flex flex-wrap items-end gap-3">
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">Code</span>
+          <input type="text" name="code" required inputmode="numeric" autocomplete="one-time-code" class="input">
+        </label>
+        <button class="btn-primary">Confirm</button>
+        <button formaction="/user/two-factor/cancel" formnovalidate class="btn-secondary">Cancel</button>
+      </form>
+    {% else %}
+      <p class="mb-4 text-sm text-gray-600">Add security to your account by also requiring a code from an authenticator application on your phone.</p>
+      <form method="post" action="/user/two-factor/enable" class="flex flex-wrap items-end gap-3">
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">Password</span>
+          <input type="password" name="password" required autocomplete="current-password" class="input">
+        </label>
+        <button class="btn-primary">Enable</button>
+      </form>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

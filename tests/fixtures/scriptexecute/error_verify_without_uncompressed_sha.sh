@@ -1,0 +1,1 @@
+echo 'Verification enabled, but uncompressed SHA256 not computed yet, try again later...'

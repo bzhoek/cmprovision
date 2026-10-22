@@ -1,0 +1,130 @@
+{% extends "app.html" %}
+{% block title %}{% if id.is_some() %}Edit project{% else %}New project{% endif %}{% endblock %}
+{% block content %}
+<form method="post" action="{% if let Some(id) = id %}/projects/{{ id }}{% else %}/projects{% endif %}" class="card mx-auto max-w-2xl space-y-5">
+  <h1 class="card-title">{% if id.is_some() %}Edit project{% else %}New project{% endif %}</h1>
+
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">Project name</span>
+    <input type="text" name="name" value="{{ fields.name }}" required maxlength="255" class="input">
+    {% if let Some(e) = errors.get("name") %}<span class="field-error">{{ e }}</span>{% endif %}
+  </label>
+
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">Image to write</span>
+    <select name="image_id" class="input">
+      <option value="">None</option>
+      {% for image in images %}
+      <option value="{{ image.id }}" {% if self.selected_image(image.id) %}selected{% endif %}>{{ image.label }}</option>
+      {% endfor %}
+    </select>
+    {% if let Some(e) = errors.get("image_id") %}<span class="field-error">{{ e }}</span>{% endif %}
+  </label>
+
+  <label class="flex items-center gap-2 text-sm">
+    <input type="checkbox" name="verify" {% if fields.verify %}checked{% endif %} class="rounded border-gray-300 text-indigo-600">
+    Verify the image after writing it (reads the whole device back, which adds time)
+  </label>
+
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">Destination storage device</span>
+    <input type="text" name="storage" value="{{ fields.storage }}" required maxlength="255" class="input font-mono">
+    {% if let Some(e) = errors.get("storage") %}<span class="field-error">{{ e }}</span>{% endif %}
+  </label>
+
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">EEPROM firmware update to apply</span>
+    <select name="firmware" id="firmware" class="input">
+      <option value="">None</option>
+      {% for (channel, list) in channels %}
+      <optgroup label="{{ channel }}">
+        {% for fw in list %}
+        <option value="{{ fw.path }}" {% if fields.firmware == fw.path %}selected{% endif %}>{{ fw.name }}</option>
+        {% endfor %}
+      </optgroup>
+      {% endfor %}
+    </select>
+    {% if let Some(e) = errors.get("firmware") %}<span class="field-error">{{ e }}</span>{% endif %}
+    {% if channels.is_empty() %}<span class="mt-1 block text-xs text-gray-500">No firmware downloaded yet; see the Firmware page.</span>{% endif %}
+  </label>
+
+  <label class="block" id="eeprom-settings-field">
+    <span class="text-sm font-medium text-gray-700">EEPROM settings</span>
+    <textarea name="eeprom_settings" id="eeprom-settings" rows="8" data-defaults="{{ firmware_defaults }}" class="input font-mono text-sm">{{ fields.eeprom_settings }}</textarea>
+    {% if let Some(e) = errors.get("eeprom_settings") %}<span class="field-error">{{ e }}</span>{% endif %}
+    <button type="button" id="reset-settings" class="btn-secondary mt-2 hidden">Reset to the defaults of the selected firmware</button>
+  </label>
+
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">When to print a label</span>
+    <select name="label_moment" class="input">
+      {% for (value, text) in moments %}
+      <option value="{{ value }}" {% if fields.label_moment == *value %}selected{% endif %}>{{ text }}</option>
+      {% endfor %}
+    </select>
+    {% if let Some(e) = errors.get("label_moment") %}<span class="field-error">{{ e }}</span>{% endif %}
+  </label>
+
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">Label to print</span>
+    <select name="label_id" class="input">
+      {% for label in labels %}
+      <option value="{{ label.id }}" {% if self.selected_label(label.id) %}selected{% endif %}>{{ label.name }}</option>
+      {% endfor %}
+    </select>
+    {% if let Some(e) = errors.get("label_id") %}<span class="field-error">{{ e }}</span>{% endif %}
+  </label>
+
+  {% if !scripts.is_empty() %}
+  <fieldset>
+    <legend class="text-sm font-medium text-gray-700">Scripts to run</legend>
+    <div class="mt-2 space-y-1">
+      {% for script in scripts %}
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="scripts" value="{{ script.id }}" {% if self.selected_script(script.id) %}checked{% endif %} class="rounded border-gray-300 text-indigo-600">
+        {{ script.name }} <span class="text-xs text-gray-500">({{ script.script_type }})</span>
+      </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  {% endif %}
+
+  <label class="flex items-center gap-2 text-sm">
+    <input type="checkbox" name="active" {% if fields.active %}checked{% endif %} class="rounded border-gray-300 text-indigo-600">
+    Make this the active project
+  </label>
+
+  <div class="flex gap-3">
+    <button class="btn-primary">Save</button>
+    <a href="/projects" class="btn-secondary">Cancel</a>
+  </div>
+</form>
+
+<script>
+  // Selecting firmware fills in its default bootloader settings, unless the user has
+  // customised them, in which case resetting is offered instead of overwriting.
+  const firmware = document.getElementById("firmware");
+  const settings = document.getElementById("eeprom-settings");
+  const reset = document.getElementById("reset-settings");
+  let defaults = settings.dataset.defaults;
+  let selectedDefaults = defaults;
+  const normalize = (s) => s.replace(/\r/g, "");
+  firmware.addEventListener("change", async () => {
+    selectedDefaults = firmware.value
+      ? await (await fetch("/firmware/bootconf?path=" + encodeURIComponent(firmware.value))).text()
+      : "";
+    const current = normalize(settings.value);
+    if (!current || current === normalize(defaults) || current === normalize(selectedDefaults)) {
+      settings.value = selectedDefaults;
+      reset.classList.add("hidden");
+    } else {
+      reset.classList.remove("hidden");
+    }
+    defaults = selectedDefaults;
+  });
+  reset.addEventListener("click", () => {
+    settings.value = selectedDefaults;
+    reset.classList.add("hidden");
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,19 @@
+{
+    "status": 200,
+    "body": [
+        {
+            "id": 1,
+            "name": "Golden",
+            "device": "cm4",
+            "storage": "/dev/mmcblk0",
+            "image_id": 1,
+            "label_id": 1,
+            "label_moment": "never",
+            "eeprom_firmware": null,
+            "eeprom_settings": null,
+            "created_at": "2024-01-02T03:04:05.000000Z",
+            "updated_at": "2024-01-02T03:04:05.000000Z",
+            "verify": false
+        }
+    ]
+}

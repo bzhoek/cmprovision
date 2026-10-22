@@ -1,0 +1,71 @@
+{% extends "app.html" %}
+{% block title %}{% if id.is_some() %}Edit label{% else %}New label{% endif %}{% endblock %}
+{% block content %}
+<form method="post" action="{% if let Some(id) = id %}/labels/{{ id }}{% else %}/labels{% endif %}" class="card mx-auto max-w-3xl space-y-5">
+  <h1 class="card-title">{% if id.is_some() %}Edit label{% else %}New label{% endif %}</h1>
+  {% if let Some(message) = message %}
+  <p class="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm whitespace-pre-wrap" role="status">{{ message }}</p>
+  {% endif %}
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">Name</span>
+    <input type="text" name="name" value="{{ fields.name }}" required maxlength="255" class="input">
+    {% if let Some(e) = errors.get("name") %}<span class="field-error">{{ e }}</span>{% endif %}
+  </label>
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">Printer</span>
+    <select name="printer_type" id="printer-type" class="input">
+      <option value="ftp" {% if fields.printer_type == "ftp" %}selected{% endif %}>FTP</option>
+      <option value="command" {% if fields.printer_type == "command" %}selected{% endif %}>Custom command</option>
+    </select>
+    {% if let Some(e) = errors.get("printer_type") %}<span class="field-error">{{ e }}</span>{% endif %}
+  </label>
+  <div data-printer="command" class="space-y-5">
+    <label class="block">
+      <span class="text-sm font-medium text-gray-700">Print command</span>
+      <input type="text" name="print_command" value="{{ fields.print_command }}" maxlength="255" class="input font-mono">
+      {% if let Some(e) = errors.get("print_command") %}<span class="field-error">{{ e }}</span>{% endif %}
+      <span class="mt-1 block text-xs text-gray-500">$file is replaced with the path of the label file.</span>
+    </label>
+  </div>
+  <div data-printer="ftp" class="grid gap-5 sm:grid-cols-3">
+    <label class="block">
+      <span class="text-sm font-medium text-gray-700">FTP hostname</span>
+      <input type="text" name="ftp_hostname" value="{{ fields.ftp_hostname }}" maxlength="255" class="input">
+      {% if let Some(e) = errors.get("ftp_hostname") %}<span class="field-error">{{ e }}</span>{% endif %}
+    </label>
+    <label class="block">
+      <span class="text-sm font-medium text-gray-700">FTP username</span>
+      <input type="text" name="ftp_username" value="{{ fields.ftp_username }}" maxlength="255" autocomplete="off" class="input">
+      {% if let Some(e) = errors.get("ftp_username") %}<span class="field-error">{{ e }}</span>{% endif %}
+    </label>
+    <label class="block">
+      <span class="text-sm font-medium text-gray-700">FTP password</span>
+      <input type="password" name="ftp_password" value="{{ fields.ftp_password }}" maxlength="255" autocomplete="new-password" class="input">
+      {% if let Some(e) = errors.get("ftp_password") %}<span class="field-error">{{ e }}</span>{% endif %}
+    </label>
+  </div>
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">File extension</span>
+    <input type="text" name="file_extension" value="{{ fields.file_extension }}" required maxlength="32" class="input font-mono">
+    {% if let Some(e) = errors.get("file_extension") %}<span class="field-error">{{ e }}</span>{% endif %}
+  </label>
+  <label class="block">
+    <span class="text-sm font-medium text-gray-700">Template</span>
+    <textarea name="template" rows="12" required class="input font-mono text-sm">{{ fields.template }}</textarea>
+    {% if let Some(e) = errors.get("template") %}<span class="field-error">{{ e }}</span>{% endif %}
+    <span class="mt-1 block text-xs text-gray-500">$mac, $serial and $provisionboard are replaced with the module's values.</span>
+  </label>
+  <div class="flex flex-wrap gap-3">
+    <button class="btn-primary">Save</button>
+    <button formaction="/labels/test{% if let Some(id) = id %}?id={{ id }}{% endif %}" class="btn-secondary">Print test label</button>
+    <a href="/labels" class="btn-secondary">Cancel</a>
+  </div>
+</form>
+<script>
+  // Only show the fields of the selected printer type.
+  const type = document.getElementById("printer-type");
+  const sync = () => document.querySelectorAll("[data-printer]").forEach((el) => { el.hidden = el.dataset.printer !== type.value; });
+  type.addEventListener("change", sync);
+  sync();
+</script>
+{% endblock %}

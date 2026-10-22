@@ -2,11 +2,24 @@
 
 set -e
 
-if [ "$1" = "remove" ]; then
-    rm -f /var/lib/cmprovision/.env
-    rm -rf /var/lib/cmprovision/storage /var/lib/cmprovision/database
-fi
+UNITS="cmprovision.service cmprovision-dnsmasq.service cmprovision-rpiboot.service"
 
-#DEBHELPER#
+case "$1" in
+  remove)
+    systemctl daemon-reload || true
+    for unit in $UNITS; do
+        deb-systemd-helper mask "$unit" >/dev/null || true
+    done
+  ;;
+  # The PHP package deleted the database on remove; keep data until an explicit purge.
+  purge)
+    for unit in $UNITS; do
+        deb-systemd-helper purge "$unit" >/dev/null || true
+        deb-systemd-helper unmask "$unit" >/dev/null || true
+    done
+    # Includes runtime state the package never shipped, like dnsmasq's lease file.
+    rm -rf /var/lib/cmprovision
+  ;;
+esac
 
 exit 0

@@ -1,0 +1,34 @@
+{
+    "status": 200,
+    "content_type": "text/plain; charset=UTF-8",
+    "cm": {
+        "serial": "10000000abcdef12",
+        "mac": "b8:27:eb:cd:ef:12",
+        "model": "CM4",
+        "memory_in_gb": 4,
+        "storage": 31268536320,
+        "cid": "15010038474e443352",
+        "csd": "d00f00320f5903ff",
+        "firmware": null,
+        "image_filename": null,
+        "image_sha256": null,
+        "pre_script_output": null,
+        "post_script_output": null,
+        "script_return_code": null,
+        "temp1": "45.2",
+        "temp2": null,
+        "project_id": 1,
+        "provisioning_board": null,
+        "provisioning_started_at": "2024-01-02 03:04:05",
+        "provisioning_complete_at": null
+    },
+    "cmlogs": [
+        {
+            "msg": "Provisioning started. No image to write.",
+            "cm": "10000000abcdef12",
+            "board": null,
+            "ip": null,
+            "loglevel": "info"
+        }
+    ]
+}

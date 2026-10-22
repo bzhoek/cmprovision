@@ -1,0 +1,1 @@
+echo 'Image does not fit in storage.'

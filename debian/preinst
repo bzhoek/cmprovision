@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -e
+
+FIRMWARE=/var/lib/cmprovision/storage/app/firmware
+
+# The PHP packages shipped the downloaded bootloader images as package files, so dpkg
+# would delete them, and the firmware existing projects refer to, during the upgrade.
+# Hard links keep them without copying; postinst puts back what dpkg removed.
+if [ "$1" = "upgrade" ] && dpkg --compare-versions "$2" lt 2.0.0 && [ -d "$FIRMWARE" ]; then
+    rm -rf "$FIRMWARE.preserved"
+    cp -al "$FIRMWARE" "$FIRMWARE.preserved"
+fi
+
+exit 0

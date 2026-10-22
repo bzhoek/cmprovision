@@ -1,0 +1,1 @@
+echo 'Image is not a valid disk image. Uncompressed size not dividable by sector size of 512 bytes.'

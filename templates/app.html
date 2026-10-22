@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block body %}
+<nav class="border-b border-gray-200 bg-white">
+  <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
+    <a href="/dashboard" class="font-semibold tracking-tight">CM Provisioning</a>
+    <div class="flex flex-1 flex-wrap gap-x-4 gap-y-1 text-sm">
+      {% for (key, href, label) in nav.links() %}
+      <a href="{{ href }}" class="{% if nav.active == *key %}font-semibold text-indigo-700{% else %}text-gray-600 hover:text-gray-900{% endif %}">{{ label }}</a>
+      {% endfor %}
+    </div>
+    <details class="relative text-sm">
+      <summary class="cursor-pointer list-none text-gray-600 hover:text-gray-900">{{ nav.user_name }} ▾</summary>
+      <div class="absolute right-0 z-10 mt-2 w-44 rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+        <a href="/user/profile" class="block px-4 py-2 hover:bg-gray-100">Profile</a>
+        <a href="/user/api-tokens" class="block px-4 py-2 hover:bg-gray-100">API tokens</a>
+        <form method="post" action="/logout">
+          <button class="block w-full px-4 py-2 text-left hover:bg-gray-100">Log out</button>
+        </form>
+      </div>
+    </details>
+  </div>
+</nav>
+<main class="mx-auto max-w-7xl px-4 py-8">
+  {% if let Some(message) = nav.flash %}
+  <div class="mb-6 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800" role="status">{{ message }}</div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
+{% endblock %}

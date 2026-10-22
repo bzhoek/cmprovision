@@ -1,0 +1,1 @@
+echo 'Missing eMMC/SD card.'

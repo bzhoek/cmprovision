@@ -36,16 +36,16 @@ This process requires a Raspberry Pi 4 which will be used solely to mass program
 
 1. Run `sudo apt update` to make sure the package information on your Pi is up to date, and it is able to install dependencies.
 
-1. Install the ready-made .deb package from https://github.com/raspberrypi/cmprovision/releases/:  
+1. Install the ready-made .deb package from https://github.com/bzhoek/cmprovision/releases/, `arm64` for 64-bit and `armhf` for 32-bit Raspberry Pi OS:  
 
     ```
-    sudo apt install ./cmprovision4_*_all.deb  
+    sudo apt install ./cmprovision4_*_arm64.deb  
     ```
 
 1. Set a web application username and password with:  
 
     ```
-    sudo /var/lib/cmprovision/artisan auth:create-user  
+    sudo -u www-data cmprovision create-user  
     ```
 
 You can now access the web interface with a web browser on the wireless LAN IP address.
@@ -65,16 +65,16 @@ When provisioning Compute Module 3 and 3+ modules, Ethernet is not used: instead
 
 1. Run `sudo apt update` to make sure the package information on your Pi is up to date, and it is able to install dependencies.
 
-1. Install the ready-made .deb package from https://github.com/raspberrypi/cmprovision/releases/:  
+1. Install the ready-made .deb package from https://github.com/bzhoek/cmprovision/releases/, `arm64` for 64-bit and `armhf` for 32-bit Raspberry Pi OS:  
 
     ```
-    sudo apt install ./cmprovision4_*_all.deb  
+    sudo apt install ./cmprovision4_*_arm64.deb  
     ```
 
 1. Set a web application username and password with:  
 
     ```
-    sudo /var/lib/cmprovision/artisan auth:create-user  
+    sudo -u www-data cmprovision create-user  
     ```
 
 You can now access the web interface with a web browser on the wireless LAN IP address.
@@ -90,18 +90,30 @@ However that requires that network boot is enabled first in the EEPROM settings 
 
 You can create a SD card that enables that with [Imager](https://www.raspberrypi.com/software/), by going to: "Choose OS" -> "Misc utility images" -> "Bootloader" -> "Network boot"
 
+## Upgrading from the PHP version ##
+
+Back up first and follow [docs/installing-on-a-pi.md](docs/installing-on-a-pi.md): the upgrade changes the database, so reinstalling 1.x afterwards only works from a backup.
+
+Installing version 2 over 1.x keeps the database, images, firmware and static IP assignments. Afterwards:
+
+* cmprovision serves port 80 itself. The nginx site is removed, and nginx is stopped and disabled when it served nothing else.
+* Users must enable two factor authentication again on their profile page.
+* `artisan auth:create-user` and `artisan ethernetswitch:configure` are now `cmprovision create-user` and `cmprovision ethernetswitch-configure`.
+
+PHP, php-fpm and nginx are no longer dependencies; remove them with `sudo apt autoremove` if nothing else uses them.
+
 ## Development ##
 
-This PHP web application uses the Laravel framework.
-Make sure you familarize yourself with the fine documentation: https://laravel.com/docs/8.x/.
+The server is a single Rust binary. Its toolchain comes from [devenv](https://devenv.sh):
 
-In particular note:
-* run `composer --install` to install the dependencies living in the `vendor` directory.
-* you probably also want to `npm install` to be able to rebuild resources.
-* if you want to use Tailwind css styles not already used in the application run: `npm run prod` after adding the html to have the .css file rebuild with the used styles included. (alternatively can run `npm run dev` to include all styles. But will result in a large .css file, so only use that during development).
-* if you modify .blade files make sure you regenerate the cache with: `./artisan view:cache`.
+* `devenv shell -- cargo test` runs the test suite.
+* `devenv shell -- cargo serve` runs the server on http://127.0.0.1:7080 with its data in `target/dev`.
+* `devenv shell -- css` rebuilds `assets/dist/app.css` after changing Tailwind classes in `templates/`.
+* `make deb` cross-compiles and packages `target/debian/cmprovision4_<version>_{arm64,armhf}.deb`.
+
+`tests/fixtures` holds responses captured from the PHP version by `tests/Golden/CaptureTest.php`; the Rust tests compare against them to keep the device and API contracts unchanged.
 
 ## Licence ##
 
 The main code of the Raspberry Pi compute module provisioning system is made available under the terms of the BSD 3-clause ("new") license.
-Look in the `vendor` directory (after running `composer --install`) to consult the open source licenses of the various dependencies like the Laravel framework used.
+Run `cargo tree` to list the dependencies, whose licenses are in their crates.
