@@ -92,6 +92,8 @@ You can create a SD card that enables that with [Imager](https://www.raspberrypi
 
 ## Upgrading from the PHP version ##
 
+Back up first and follow [docs/installing-on-a-pi.md](docs/installing-on-a-pi.md): the upgrade changes the database, so reinstalling 1.x afterwards only works from a backup.
+
 Installing version 2 over 1.x keeps the database, images, firmware and static IP assignments. Afterwards:
 
 * cmprovision serves port 80 itself. The nginx site is removed, and nginx is stopped and disabled when it served nothing else.

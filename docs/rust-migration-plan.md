@@ -56,6 +56,8 @@ Docker images kept for re-testing: `cmprovision-php163` (PHP install with data) 
 
 ## Phase 11: cutover test on a real Pi 4
 
+Install and back-up steps are in [installing-on-a-pi.md](installing-on-a-pi.md).
+
 1. Upgrade an existing PHP installation: `sudo apt install ./cmprovision4_2.0.0_arm64.deb`.
    Check projects, images, CMs, static IPs and firmware survive; log in with an existing password.
 2. Provision a CM4: eMMC, verify enabled, EEPROM firmware update, label printing.
