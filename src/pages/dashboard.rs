@@ -26,7 +26,7 @@ pub async fn show(State(state): State<AppState>, CurrentUser(user): CurrentUser,
         .map(|row| LogRow {
             board: row.board.unwrap_or_default(),
             cm: row.cm,
-            time: row.created_at.as_deref().and_then(|t| t.split_once(' ')).map(|(_, time)| time.to_string()).unwrap_or_default(),
+            timestamp: row.created_at.unwrap_or_default(),
             lines: row.msg.lines().map(str::to_string).collect(),
             error: row.loglevel == "error",
         })

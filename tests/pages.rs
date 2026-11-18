@@ -18,6 +18,32 @@ async fn every_page_renders_for_users_and_redirects_guests() {
     }
 }
 
+#[tokio::test]
+async fn dashboard_shows_date_and_time_of_log_entries() {
+    let app = App::new().await;
+    app.exec("INSERT INTO cmlogs (cm, loglevel, msg, created_at) VALUES ('10000000aaaaaaaa', 'info', 'Provisioning started.', '2024-01-02 03:04:05')").await;
+
+    let page = app.logged_in().await.get("/dashboard").await;
+
+    assert!(page.body.contains("2024-01-02 03:04:05 UTC"), "{}", page.body);
+}
+
+#[tokio::test]
+async fn cms_page_lists_most_recently_completed_first() {
+    let app = App::new().await;
+    app.exec(
+        "INSERT INTO cms (serial, mac, provisioning_complete_at) VALUES \
+         ('aaaa0001', 'x', '2024-01-01 10:00:00'), ('aaaa0002', 'x', NULL), ('aaaa0003', 'x', '2024-03-01 10:00:00'), ('aaaa0004', 'x', '2024-02-01 10:00:00')",
+    )
+    .await;
+
+    let page = app.logged_in().await.get("/cms?project=0").await;
+
+    let position = |serial: &str| page.body.find(serial).unwrap();
+    let order = ["aaaa0003", "aaaa0004", "aaaa0001", "aaaa0002"];
+    assert!(order.windows(2).all(|w| position(w[0]) < position(w[1])), "expected {order:?}");
+}
+
 async fn seed_cm(app: &App, serial: &str) {
     sqlx::query(
         "INSERT INTO cms (serial, mac, model, project_id, provisioning_started_at, provisioning_complete_at, pre_script_output) \
