@@ -15,7 +15,7 @@
     </thead>
     <tbody class="divide-y divide-gray-100">
       {% for f in firmware %}
-      <tr><td class="px-4 py-2 font-mono">{{ f.name }}</td><td class="px-4 py-2">{{ f.channel }}</td></tr>
+      <tr><td class="px-4 py-2 font-mono" translate="no">{{ f.name }}</td><td class="px-4 py-2">{{ f.channel }}</td></tr>
       {% else %}
       <tr><td colspan="2" class="px-4 py-6 text-center text-gray-500">No firmware downloaded yet.</td></tr>
       {% endfor %}
