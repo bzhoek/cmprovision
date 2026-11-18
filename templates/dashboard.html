@@ -12,7 +12,7 @@
       <tr class="{% if row.error %}bg-red-50{% endif %} align-top">
         <td class="whitespace-nowrap px-4 py-2">{{ row.board }}</td>
         <td class="whitespace-nowrap px-4 py-2 font-mono">{{ row.cm }}</td>
-        <td class="px-4 py-2"><span class="text-gray-500">{{ row.time }}</span>
+        <td class="px-4 py-2"><span class="whitespace-nowrap text-gray-500">{{ row.timestamp }} UTC</span>
           {% for line in row.lines %}{{ line }}{% if !loop.last %}<br>{% endif %}{% endfor %}</td>
       </tr>
       {% else %}

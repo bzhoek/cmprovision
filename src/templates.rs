@@ -87,7 +87,8 @@ pub struct TwoFactorChallenge {
 pub struct LogRow {
     pub board: String,
     pub cm: String,
-    pub time: String,
+    /// Stored in UTC, as Eloquent wrote it.
+    pub timestamp: String,
     pub lines: Vec<String>,
     pub error: bool,
 }

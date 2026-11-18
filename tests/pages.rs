@@ -18,6 +18,16 @@ async fn every_page_renders_for_users_and_redirects_guests() {
     }
 }
 
+#[tokio::test]
+async fn dashboard_shows_date_and_time_of_log_entries() {
+    let app = App::new().await;
+    app.exec("INSERT INTO cmlogs (cm, loglevel, msg, created_at) VALUES ('10000000aaaaaaaa', 'info', 'Provisioning started.', '2024-01-02 03:04:05')").await;
+
+    let page = app.logged_in().await.get("/dashboard").await;
+
+    assert!(page.body.contains("2024-01-02 03:04:05 UTC"), "{}", page.body);
+}
+
 async fn seed_cm(app: &App, serial: &str) {
     sqlx::query(
         "INSERT INTO cms (serial, mac, model, project_id, provisioning_started_at, provisioning_complete_at, pre_script_output) \
