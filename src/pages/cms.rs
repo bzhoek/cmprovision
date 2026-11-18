@@ -85,7 +85,7 @@ pub async fn index(State(state): State<AppState>, CurrentUser(user): CurrentUser
         nav: Nav::new(&session, &user, "cms").await?,
         projects: counts.into_iter().map(|(id, name, count)| ProjectOption { id, name, count }).collect(),
         selected: selected.unwrap_or(0),
-        cms: models::cms(&state.db, selected).await?,
+        cms: models::cms_by_completion(&state.db, selected).await?,
     })
 }
 

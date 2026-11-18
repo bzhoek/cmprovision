@@ -173,6 +173,17 @@ pub async fn cms(db: &SqlitePool, project_id: Option<i64>) -> sqlx::Result<Vec<C
     }
 }
 
+/// Most recently completed first; modules that never completed follow, newest first.
+pub async fn cms_by_completion(db: &SqlitePool, project_id: Option<i64>) -> sqlx::Result<Vec<CmDetail>> {
+    match project_id {
+        Some(id) => sqlx::query_as("SELECT * FROM cms WHERE project_id = ? ORDER BY provisioning_complete_at DESC NULLS LAST, id DESC")
+            .bind(id)
+            .fetch_all(db)
+            .await,
+        None => sqlx::query_as("SELECT * FROM cms ORDER BY provisioning_complete_at DESC NULLS LAST, id DESC").fetch_all(db).await,
+    }
+}
+
 pub async fn cm(db: &SqlitePool, id: i64) -> sqlx::Result<Option<CmDetail>> {
     sqlx::query_as("SELECT * FROM cms WHERE id = ?").bind(id).fetch_optional(db).await
 }
